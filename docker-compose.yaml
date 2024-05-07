@@ -1,0 +1,236 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    networks:
+      - nected-network
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: nected
+      POSTGRES_PASSWORD: psqlPass123
+      POSTGRES_DB: nected
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "nected", "-U", "nected" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  mongo:
+    image: mongo
+    networks:
+      - nected-network
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb:/var/lib/mongodb/data
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: nected
+      MONGO_INITDB_ROOT_PASSWORD: mongoPass123
+      MONGO_INITDB_DATABASE: nected
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh mongo:27017/nected --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - nected-network
+    ports:
+      - 6379:6379
+    command: redis-server --save 20 1 --loglevel warning
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
+    networks:
+      - nected-network
+    ports:
+      - 9200:9200
+    volumes:
+      - elasticsearch:/usr/share/elasticsearch/data
+    mem_limit: ${MEM_LIMIT}
+    environment:
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      bootstrap.memory_lock: true
+      ELASTIC_PASSWORD: esPass123
+      discovery.type: single-node
+      xpack.security.enabled: false
+      xpack.security.enrollment.enabled: false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl http://localhost:9200 | grep -q 'You Know, for Search'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  temporal:
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      postgres:
+         condition: service_healthy
+    image: temporalio/auto-setup:${TEMPORAL_VERSION}
+    networks:
+      - nected-network
+    ports:
+      - 7233:7233
+    volumes:
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=nected
+      - POSTGRES_PWD=psqlPass123
+      - POSTGRES_SEEDS=postgres
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+      - ENABLE_ES=true
+      - ES_SCHEME=http
+      - ES_SEEDS=elasticsearch
+      - ES_USER=elastic
+      - ES_PWD=esPass123
+      - ES_VERSION=v7
+      - ES_PORT=9200
+    labels:
+      kompose.volume.type: configMap
+  temporal-admin-tools:
+    depends_on:
+      - temporal
+    image: temporalio/admin-tools:${TEMPORAL_VERSION}
+    networks:
+      - nected-network
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    stdin_open: true
+    tty: true
+  temporal-ui:
+    depends_on:
+      - temporal
+    image: temporalio/ui:${TEMPORAL_UI_VERSION}
+    networks:
+      - nected-network
+    ports:
+      - 8080:8080
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+
+  # nected services
+  nalandaAutoSetup:
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    image: public.ecr.aws/f6k1n6r3/nalanda:${NALANDA_TAG}
+    networks:
+      - nected-network
+    volumes:
+      - ./nectedconfig/nalanda.env:/tmp/envFile
+    command:
+    - /bin/sh
+    - -c
+    - |
+      cp /tmp/envFile .env
+      /app/nalanda --init
+
+  nalanda:
+    depends_on:
+      - nalandaAutoSetup
+    image: public.ecr.aws/f6k1n6r3/nalanda:${NALANDA_TAG}
+    networks:
+      - nected-network
+    ports:
+      - 8001:8001
+    volumes:
+      - ./nectedconfig/nalanda.env:/tmp/envFile
+  vidhaan-router:
+    depends_on:
+      - temporal
+      - redis
+    image: public.ecr.aws/f6k1n6r3/vidhaan-router:${VIDHAAN_TAG}
+    networks:
+      - nected-network
+    ports:
+      - 8002:8002
+    volumes:
+      - ./nectedconfig/vidhaan.env:/tmp/envFile
+    command:
+    - /bin/sh
+    - -c
+    - |
+      cp /tmp/envFile .env
+      /app/nalanda --init
+  vidhaan-executer:
+    depends_on:
+      - temporal
+      - redis
+    image: public.ecr.aws/f6k1n6r3/vidhaan-executer:${VIDHAAN_TAG}
+    networks:
+      - nected-network
+    volumes:
+      - ./nectedconfig/vidhaan.env:/tmp/envFile
+  sql-linter:
+    image: public.ecr.aws/f6k1n6r3/sql-linter:${LINTER_TAG}
+    networks:
+      - nected-network
+    ports:
+      - 8000:8000
+  konark:
+    image: public.ecr.aws/f6k1n6r3/konark:${KONARK_TAG}
+    networks:
+      - nected-network
+    ports:
+      - 3000:80
+    volumes:
+      - ./nectedconfig/konark.env:/tmp/envFile
+  editor:
+    image: public.ecr.aws/f6k1n6r3/nected-editor:${EDITOR_TAG}
+    networks:
+      - nected-network
+    ports:
+      - 3001:80
+    volumes:
+      - ./nectedconfig/editor.env:/tmp/envFile
+
+networks:
+  nected-network:
+    driver: bridge
+    name: nected-network
+
+volumes:
+  elasticsearch:
+    driver: local
+  postgres:
+    driver: local
+  mongodb:
+    driver: local
+  redis:
+    driver: local
