@@ -138,8 +138,8 @@ services:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CORS_ORIGINS=http://localhost:3000
 
-  # nected services
-  nalandaAutoSetup:
+
+  nalanda:
     depends_on:
       postgres:
         condition: service_healthy
@@ -152,25 +152,17 @@ services:
     image: public.ecr.aws/f6k1n6r3/nalanda:${NALANDA_TAG}
     networks:
       - nected-network
-    volumes:
-      - ./nectedconfig/nalanda.env:/tmp/envFile
-    command:
-    - /bin/sh
-    - -c
-    - |
-      cp /tmp/envFile .env
-      /app/nalanda --init
-
-  nalanda:
-    depends_on:
-      - nalandaAutoSetup
-    image: public.ecr.aws/f6k1n6r3/nalanda:${NALANDA_TAG}
-    networks:
-      - nected-network
     ports:
       - 8001:8001
     volumes:
       - ./nectedconfig/nalanda.env:/tmp/envFile
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cp /tmp/envFile .env
+        /app/nalanda --init
+        /app/nalanda
   vidhaan-router:
     depends_on:
       - temporal
@@ -182,12 +174,6 @@ services:
       - 8002:8002
     volumes:
       - ./nectedconfig/vidhaan.env:/tmp/envFile
-    command:
-    - /bin/sh
-    - -c
-    - |
-      cp /tmp/envFile .env
-      /app/nalanda --init
   vidhaan-executer:
     depends_on:
       - temporal
@@ -224,6 +210,11 @@ networks:
   nected-network:
     driver: bridge
     name: nected-network
+    ipam:
+      driver: default
+      config:
+        - subnet: "10.10.0.0/24"
+          gateway: "10.10.0.1"
 
 volumes:
   elasticsearch:
