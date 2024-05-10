@@ -25,7 +25,8 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - mongodb:/var/lib/mongodb/data
+      - mongodb:/data/db
+      - mongodb:/data/configdb
     environment:
       MONGO_INITDB_ROOT_USERNAME: nected
       MONGO_INITDB_ROOT_PASSWORD: mongoPass123
