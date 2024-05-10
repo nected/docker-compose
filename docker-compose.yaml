@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:${POSTGRES_VERSION}
     networks:
       - nected-network
     ports:
@@ -19,7 +19,7 @@ services:
       start_period: 40s
 
   mongo:
-    image: mongo
+    image: mongo:${MONGO_VERSION}
     networks:
       - nected-network
     ports:
@@ -39,7 +39,7 @@ services:
       start_period: 40s
 
   redis:
-    image: redis:7-alpine
+    image: redis:${REDIS_VERSION}
     networks:
       - nected-network
     ports:
