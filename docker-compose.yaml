@@ -18,26 +18,6 @@ services:
       retries: 5
       start_period: 40s
 
-  mongo:
-    image: mongo:${MONGO_VERSION}
-    networks:
-      - nected-network
-    ports:
-      - 27017:27017
-    volumes:
-      - mongodb:/data/db
-      - mongodb:/data/configdb
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: nected
-      MONGO_INITDB_ROOT_PASSWORD: mongoPass123
-      MONGO_INITDB_DATABASE: nected
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh mongo:27017/nected --quiet
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
-
   redis:
     image: redis:${REDIS_VERSION}
     networks:
@@ -86,7 +66,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 40s
-
   temporal:
     depends_on:
       elasticsearch:
@@ -101,7 +80,7 @@ services:
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
     environment:
-      - DB=postgresql
+      - DB=postgres12
       - DB_PORT=5432
       - POSTGRES_USER=nected
       - POSTGRES_PWD=psqlPass123
@@ -116,37 +95,33 @@ services:
       - ES_PORT=9200
     labels:
       kompose.volume.type: configMap
-  temporal-admin-tools:
-    depends_on:
-      - temporal
-    image: temporalio/admin-tools:${TEMPORAL_VERSION}
-    networks:
-      - nected-network
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CLI_ADDRESS=temporal:7233
-    stdin_open: true
-    tty: true
-  temporal-ui:
-    depends_on:
-      - temporal
-    image: temporalio/ui:${TEMPORAL_UI_VERSION}
-    networks:
-      - nected-network
-    ports:
-      - 8080:8080
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
-
-
+  # temporal-admin-tools:
+  #   depends_on:
+  #     - temporal
+  #   image: temporalio/admin-tools:${TEMPORAL_AT_VERSION}
+  #   networks:
+  #     - nected-network
+  #   environment:
+  #     - TEMPORAL_ADDRESS=temporal:7233
+  #     - TEMPORAL_CLI_ADDRESS=temporal:7233
+  #   stdin_open: true
+  #   tty: true
+  # temporal-ui:
+  #   depends_on:
+  #     - temporal
+  #   image: temporalio/ui:${TEMPORAL_UI_VERSION}
+  #   networks:
+  #     - nected-network
+  #   ports:
+  #     - 8080:8080
+  #   environment:
+  #     - TEMPORAL_ADDRESS=temporal:7233
+  #     - TEMPORAL_CORS_ORIGINS=http://localhost:3000
   nalanda:
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      mongo:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
@@ -156,34 +131,36 @@ services:
     ports:
       - 8001:8001
     volumes:
-      - ./nectedconfig/nalanda.env:/tmp/envFile
+      - ./nectedconfig/nalanda.env:/mnt/temp/envFile
     command:
       - /bin/sh
       - -c
       - |
-        cp /tmp/envFile .env
-        /app/nalanda --init
+        cp /mnt/temp/envFile .env
+        /app/nalanda --init --init-elastic
         /app/nalanda
   vidhaan-router:
     depends_on:
       - temporal
       - redis
+      - postgres
     image: public.ecr.aws/f6k1n6r3/vidhaan-router:${VIDHAAN_TAG}
     networks:
       - nected-network
     ports:
       - 8002:8002
     volumes:
-      - ./nectedconfig/vidhaan.env:/tmp/envFile
+      - ./nectedconfig/vidhaan.env:/mnt/temp/envFile
   vidhaan-executer:
     depends_on:
       - temporal
       - redis
+      - postgres
     image: public.ecr.aws/f6k1n6r3/vidhaan-executer:${VIDHAAN_TAG}
     networks:
       - nected-network
     volumes:
-      - ./nectedconfig/vidhaan.env:/tmp/envFile
+      - ./nectedconfig/vidhaan.env:/mnt/temp/envFile
   sql-linter:
     image: public.ecr.aws/f6k1n6r3/sql-linter:${LINTER_TAG}
     networks:
@@ -197,7 +174,7 @@ services:
     ports:
       - 3000:80
     volumes:
-      - ./nectedconfig/konark.env:/tmp/envFile
+      - ./nectedconfig/konark.env:/mnt/temp/envFile
   editor:
     image: public.ecr.aws/f6k1n6r3/nected-editor:${EDITOR_TAG}
     networks:
@@ -205,7 +182,7 @@ services:
     ports:
       - 3001:80
     volumes:
-      - ./nectedconfig/editor.env:/tmp/envFile
+      - ./nectedconfig/editor.env:/mnt/temp/envFile
 
 networks:
   nected-network:
@@ -221,8 +198,6 @@ volumes:
   elasticsearch:
     driver: local
   postgres:
-    driver: local
-  mongodb:
     driver: local
   redis:
     driver: local
