@@ -95,28 +95,6 @@ services:
       - ES_PORT=9200
     labels:
       kompose.volume.type: configMap
-  # temporal-admin-tools:
-  #   depends_on:
-  #     - temporal
-  #   image: temporalio/admin-tools:${TEMPORAL_AT_VERSION}
-  #   networks:
-  #     - nected-network
-  #   environment:
-  #     - TEMPORAL_ADDRESS=temporal:7233
-  #     - TEMPORAL_CLI_ADDRESS=temporal:7233
-  #   stdin_open: true
-  #   tty: true
-  # temporal-ui:
-  #   depends_on:
-  #     - temporal
-  #   image: temporalio/ui:${TEMPORAL_UI_VERSION}
-  #   networks:
-  #     - nected-network
-  #   ports:
-  #     - 8080:8080
-  #   environment:
-  #     - TEMPORAL_ADDRESS=temporal:7233
-  #     - TEMPORAL_CORS_ORIGINS=http://localhost:3000
   nalanda:
     depends_on:
       postgres:
@@ -139,26 +117,16 @@ services:
         cp /mnt/temp/envFile .env
         /app/nalanda --init --init-elastic
         /app/nalanda
-  vidhaan-router:
+  vidhaan:
     depends_on:
       - temporal
       - redis
       - postgres
-    image: public.ecr.aws/f6k1n6r3/vidhaan-router:${VIDHAAN_TAG}
+    image: public.ecr.aws/f6k1n6r3/vidhaan:${VIDHAAN_TAG}
     networks:
       - nected-network
     ports:
       - 8002:8002
-    volumes:
-      - ./nectedconfig/vidhaan.env:/mnt/temp/envFile
-  vidhaan-executer:
-    depends_on:
-      - temporal
-      - redis
-      - postgres
-    image: public.ecr.aws/f6k1n6r3/vidhaan-executer:${VIDHAAN_TAG}
-    networks:
-      - nected-network
     volumes:
       - ./nectedconfig/vidhaan.env:/mnt/temp/envFile
   sql-linter:
