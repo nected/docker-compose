@@ -43,7 +43,8 @@ services:
       - elasticsearch:/usr/share/elasticsearch/data
     mem_limit: ${MEM_LIMIT}
     environment:
-      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      ES_JAVA_OPTS: ${ES_JAVA_OPTS}
+      CLI_JAVA_OPTS: ${ES_CLI_JAVA_OPTS}
       bootstrap.memory_lock: true
       ELASTIC_PASSWORD: esPass123
       discovery.type: single-node

@@ -23,6 +23,12 @@ cd  docker-compose
 docker-compose up
 ```
 
+For Apple M4 users, please do update following keys in .env :
+```
+ES_JAVA_OPTS="-Xms512m -Xmx512m -XX:UseSVE=0"
+ES_CLI_JAVA_OPTS="-XX:UseSVE=0"
+```
+
 
 ## How to access
 
