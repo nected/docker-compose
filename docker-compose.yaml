@@ -3,8 +3,6 @@ services:
     image: postgres:${POSTGRES_VERSION}
     networks:
       - nected-network
-    ports:
-      - 5432:5432
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:
@@ -22,8 +20,6 @@ services:
     image: redis:${REDIS_VERSION}
     networks:
       - nected-network
-    ports:
-      - 6379:6379
     command: redis-server --save 20 1 --loglevel warning
     volumes:
       - redis:/data
@@ -37,8 +33,6 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
     networks:
       - nected-network
-    ports:
-      - 9200:9200
     volumes:
       - elasticsearch:/usr/share/elasticsearch/data
     mem_limit: ${MEM_LIMIT}
