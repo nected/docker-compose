@@ -105,13 +105,13 @@ services:
       - 8001:8001
     volumes:
       - ./nectedconfig/nalanda.env:/mnt/temp/envFile
+    entrypoint: /bin/sh
     command:
-      - /bin/sh
-      - -c
-      - |
-        cp /mnt/temp/envFile .env
-        /app/nalanda --init --init-elastic
-        /app/nalanda
+    - -c
+    - |
+      cp /mnt/temp/envFile .env
+      /app/nalanda init -e
+      /app/nalanda nalanda
   vidhaan:
     depends_on:
       - temporal
