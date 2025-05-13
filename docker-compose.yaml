@@ -108,7 +108,7 @@ services:
     - -c
     - |
       cp /mnt/temp/envFile .env
-      /app/nalanda init -e
+      /app/nalanda init -e -j
       /app/nalanda nalanda
   vidhaan:
     depends_on:
