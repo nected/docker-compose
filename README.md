@@ -24,7 +24,8 @@ git clone https://github.com/nected/docker-compose.git
 # Navigate to the project directory
 cd docker-compose
 
-# Start the containers
+# Pull and Start the containers
+docker compose pull
 docker-compose up
 ```
 
