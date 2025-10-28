@@ -141,14 +141,6 @@ services:
       - 3000:80
     volumes:
       - ./nectedconfig/konark.env:/mnt/temp/envFile
-  editor:
-    image: public.ecr.aws/f6k1n6r3/nected-editor:${EDITOR_TAG}
-    networks:
-      - nected-network
-    ports:
-      - 3001:80
-    volumes:
-      - ./nectedconfig/editor.env:/mnt/temp/envFile
 
 networks:
   nected-network:
