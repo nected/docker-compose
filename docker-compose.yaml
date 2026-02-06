@@ -126,6 +126,13 @@ services:
     image: public.ecr.aws/f6k1n6r3/medha:${MEDHA_TAG}
     environment:
       ENVIRONMENT: production
+      DB_ENABLED: true
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DB: nected
+      DB_USER: nected
+      DB_PASSWORD: psqlPass123
+      COPILOT_PDF_OCR: true
       EDITOR_EXCLUDED_RULES: "ST05,LT08,LT12"
       EDITOR_INCLUDED_RULES: "CV01,CV02,CV03,CV04,CV05,CV06,CV07,CV08,CV09,CV10,CV11,LT03,LT04,LT07,LT10,LT11,LT13,RF06,ST01,ST02,ST03,ST04,ST07,ST08,TQ01"
       EDITOR_ENABLED_DIALECTS: "mysql,postgres,redshift,oracle,snowflake"
