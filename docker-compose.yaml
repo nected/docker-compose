@@ -96,6 +96,7 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
+    platform: linux/amd64
     image: public.ecr.aws/f6k1n6r3/nalanda:${NALANDA_TAG}
     networks:
       - nected-network
@@ -115,6 +116,7 @@ services:
       - temporal
       - redis
       - postgres
+    platform: linux/amd64
     image: public.ecr.aws/f6k1n6r3/vidhaan:${VIDHAAN_TAG}
     networks:
       - nected-network
@@ -123,6 +125,7 @@ services:
     volumes:
       - ./nectedconfig/vidhaan.env:/mnt/temp/envFile
   medha:
+    platform: linux/amd64
     image: public.ecr.aws/f6k1n6r3/medha:${MEDHA_TAG}
     environment:
       ENVIRONMENT: production
@@ -141,6 +144,7 @@ services:
     networks:
       - nected-network
   konark:
+    platform: linux/amd64
     image: public.ecr.aws/f6k1n6r3/konark:${KONARK_TAG}
     networks:
       - nected-network
