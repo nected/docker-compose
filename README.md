@@ -13,6 +13,16 @@ Before you begin, ensure the following are installed:
 
 ---
 
+### 🔐 License Key
+To generate your License Key, please use the link below:
+[Get Your License Key](https://www.nected.ai/?license_key=true)
+
+After generating the license key, update its value in nectedvalues/nalanda.env & nectedvalues/vidhaan.env
+
+VIDHAAN_PRE_SHARED_KEY=<<LICENSE_KEY>>
+
+---
+
 ## 🛠️ Getting Started
 
 Follow these steps to set up Nected locally using the default configuration (`docker-compose.yml`):
