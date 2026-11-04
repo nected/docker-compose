@@ -136,6 +136,10 @@ services:
       EDITOR_EXCLUDED_RULES: "ST05,LT08,LT12"
       EDITOR_INCLUDED_RULES: "CV01,CV02,CV03,CV04,CV05,CV06,CV07,CV08,CV09,CV10,CV11,LT03,LT04,LT07,LT10,LT11,LT13,RF06,ST01,ST02,ST03,ST04,ST07,ST08,TQ01"
       EDITOR_ENABLED_DIALECTS: "mysql,postgres,redshift,oracle,snowflake"
+      # Disables OpenSSL ARM CPU-feature detection; without this, cryptography's bundled
+      # OpenSSL hits SIGILL (exit 132) inside the Docker Desktop VM on Apple M4 hosts.
+      # Ignored on amd64.
+      OPENSSL_armcap: "0"
     networks:
       - nected-network
   konark:
